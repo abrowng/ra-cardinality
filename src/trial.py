@@ -7,8 +7,14 @@ FIELDS = [
     "estimator", "dataset", "filename",         # General settings
     "alpha", "n", "N",                          # Zipf stream settings
     "b", "bias_correction", "range_correction", # HyperLogLog settings
+    "k",                                        # Recordinality settings
     "repetitions",                              # Output settings
+    "hash_family",
 ]
+
+DEFAULT_VALUES = (
+    None, None, None, 1, 1, 1, 2, True, True, 1, 10, None
+)
 
 
 class Dataset(Enum):
@@ -21,7 +27,7 @@ class CardinalityEstimator(Enum):
     REC = "rec"
 
 
-class Trial(namedtuple("Trial", field_names=FIELDS, defaults=(None,) * len(FIELDS))):
+class Trial(namedtuple("Trial", field_names=FIELDS, defaults=DEFAULT_VALUES)):
 
     estimator: CardinalityEstimator
     dataset: Dataset
@@ -30,6 +36,8 @@ class Trial(namedtuple("Trial", field_names=FIELDS, defaults=(None,) * len(FIELD
     n: int
     N: int
     b: int
+    k: int
     repetitions: int
-    bias_correction: bool = True
-    range_correction: bool = True
+    bias_correction: bool
+    range_correction: bool
+    hash_family: str
