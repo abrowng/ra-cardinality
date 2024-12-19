@@ -2,7 +2,7 @@ import math
 
 
 class HyperLogLog:
-    def __init__(self, b: int, hash_function=None, hash_bits=32, range_correction=True, bias_correction=True):
+    def __init__(self, b: int, hash_function=None, hash_bits=32, range_correction=True, bias_correction=True, verbose=False):
         self._hash = hash_function
         self.b = b
         self.m = 1 << b  # Number of buckets (2^b)
@@ -10,24 +10,22 @@ class HyperLogLog:
         self.hash_bits = hash_bits
         self.range_correction = range_correction
         self.bias_correction = bias_correction
+        self._verbose = verbose
 
-    def count_zeros(self, hash_value):
-        zeros = 0
-        while hash_value:
-            if hash_value & 1 << 0 == 0:
-                zeros += 1
-                hash_value >>= 1
-                continue
-            break
-        return zeros
+    def estimate(self, stream):
 
-    def add(self, value):
-        x = self._hash(value)
-        # Extract the first b bits as bucket index
-        j = x >> (self.hash_bits - self.b)
-        self.buckets[j] = max(self.buckets[j], self.count_zeros(x))
+        for value in stream:
+            x = self._hash(value.replace("\n", ""))
+            x_bit_size = x.bit_length()
+            j = x >> (self.hash_bits - self.b)
+            if x == 0:
+                zeros = 32
+            else:
+                zeros = (x & -x).bit_length() - 1
+            if self._verbose:
+                print(f"Binary Hash: {bin(x)}, \t\t Bit Size: {x_bit_size}, \t\t Address: {j}, \t\t Zeros: {zeros}")
+            self.buckets[j] = max(self.buckets[j], zeros + 1)
 
-    def estimate(self):
         # HyperLogLog bias-corrected constant
         alpha_m = 0.7213 / (1 + 1.079 / self.m)
         if self.bias_correction:
